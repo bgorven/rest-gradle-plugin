@@ -130,13 +130,14 @@ class RestTask extends DefaultTask {
 
         if (waitUntil) {
             def serverResponse
-            do {
+            while (!serverResponse || !callResponseHandler(waitUntil, serverResponse)) {
                 try {
                     serverResponse = client."${httpMethod.toLowerCase()}"(params)
                 } catch (groovyx.net.http.HttpResponseException e) {
+                    serverResponse = null
                     continue
                 }
-            } while (!callResponseHandler(waitUntil, serverResponse))
+            }
         } else {
             try {
                 def serverResponse = client."${httpMethod.toLowerCase()}"(params)
