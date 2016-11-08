@@ -133,7 +133,8 @@ class RestTask extends DefaultTask {
             while (!serverResponse || !callResponseHandler(waitUntil, serverResponse)) {
                 try {
                     serverResponse = client."${httpMethod.toLowerCase()}"(params)
-                } catch (groovyx.net.http.HttpResponseException e) {
+                } catch (groovyx.net.http.HttpResponseException | java.net.ConnectException e) {
+                    slf4jLogger.info e.message
                     serverResponse = null
                     continue
                 }
