@@ -75,8 +75,10 @@ class RestTask extends DefaultTask {
     @Input
     @Optional
     Closure responseHandler
-
-    HttpResponseDecorator serverResponse
+    
+    @Input
+    @Optional
+    Closure waitUntil
 
     RestTask() {
         httpMethod = 'get'
@@ -126,23 +128,30 @@ class RestTask extends DefaultTask {
 
         slf4jLogger.info "Executing a '$httpMethod' request to '$uri'"
 
-        try {
-            serverResponse = client."${httpMethod.toLowerCase()}"(params)
-            if (noResponseHandler()) {
-                slf4jLogger.info "Server Response:" + System.lineSeparator() + serverResponse.getData()
-            } else {
-                callResponseHandler()
+        if (waitUntil) {
+            def serverResponse
+            do {
+                try {
+                    serverResponse = client."${httpMethod.toLowerCase()}"(params)
+                } catch (groovyx.net.http.HttpResponseException e) {
+                    continue
+                }
+            } while (!callResponseHandler(waitUntil, serverResponse))
+        } else {
+            try {
+                def serverResponse = client."${httpMethod.toLowerCase()}"(params)
+                if (responseHandler) {
+                    callResponseHandler(responseHandler, serverResponse)
+                } else {
+                    slf4jLogger.info "Server Response:" + System.lineSeparator() + serverResponse.getData()
+                }
+            } catch (groovyx.net.http.HttpResponseException e) {
+                throw new GradleException(e.getResponse().getData().toString(), e)
             }
-        } catch (groovyx.net.http.HttpResponseException e) {
-            throw new GradleException(e.getResponse().getData().toString(), e)
         }
     }
 
-    private boolean noResponseHandler() {
-        !responseHandler || responseHandler.maximumNumberOfParameters != 1
-    }
-
-    void callResponseHandler() {
+    Object callResponseHandler(responseHandler, serverResponse) {
         def parameterType = responseHandler.parameterTypes.first()
         if (InputStream.isAssignableFrom(parameterType)) {
             responseHandler.call(serverResponse.entity.content)
