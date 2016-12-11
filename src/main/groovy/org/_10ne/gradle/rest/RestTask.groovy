@@ -79,6 +79,8 @@ class RestTask extends DefaultTask {
     @Input
     @Optional
     Closure waitUntil
+    
+    HttpResponseDecorator serverResponse
 
     RestTask() {
         httpMethod = 'get'
@@ -129,7 +131,6 @@ class RestTask extends DefaultTask {
         slf4jLogger.info "Executing a '$httpMethod' request to '$uri'"
 
         if (waitUntil) {
-            def serverResponse
             while (!serverResponse || !callResponseHandler(waitUntil, serverResponse)) {
                 try {
                     serverResponse = client."${httpMethod.toLowerCase()}"(params)
@@ -141,7 +142,7 @@ class RestTask extends DefaultTask {
             }
         } else {
             try {
-                def serverResponse = client."${httpMethod.toLowerCase()}"(params)
+                serverResponse = client."${httpMethod.toLowerCase()}"(params)
                 if (responseHandler) {
                     callResponseHandler(responseHandler, serverResponse)
                 } else {
