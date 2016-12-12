@@ -39,6 +39,7 @@ class RestTask extends DefaultTask {
     RESTClient client
 
     @Input
+    @Optional
     String httpMethod
 
     @Input
