@@ -83,7 +83,6 @@ class RestTask extends DefaultTask {
     HttpResponseDecorator serverResponse
 
     RestTask() {
-        httpMethod = 'get'
         client = new RESTClient()
     }
 
@@ -126,6 +125,9 @@ class RestTask extends DefaultTask {
         }
         if (requestContentType) {
             params.requestContentType = requestContentType
+        }
+        if (!httpMethod) {
+            httpMethod = requestBody ? 'post' : 'get'
         }
 
         slf4jLogger.info "Executing a '$httpMethod' request to '$uri'"
